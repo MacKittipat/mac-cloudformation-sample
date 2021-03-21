@@ -11,6 +11,6 @@ aws cloudformation delete-stack --stack-name mac-sample-ec2
 
 ### Connect to EC2
 ```
-ssh -i {KEY_PAIR_FILE{} ubuntu@{EC2_IP}
+ssh -i {KEY_PAIR_FILE} ubuntu@{EC2_IP}
 ```
 

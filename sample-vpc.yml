@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A sample of setting public and private VPC
+
+Resources:
+  MacVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: false
+      EnableDnsSupport: false
+      Tags:
+        - Key: Name
+          Value: MacVpc
+
+  # Public Subnet
+  MacPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref MacVpc
+      Tags:
+        - Key: Name
+          Value: MacPublicSubnet1
+
+  MacPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref MacVpc
+      Tags:
+        - Key: Name
+          Value: MacPublicSubnet2
+
+  # Private Subnet
+  MacPrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref MacVpc
+      Tags:
+        - Key: Name
+          Value: MacPrivateSubnet1
+
+  MacPrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref MacVpc
+      Tags:
+        - Key: Name
+          Value: MacPrivateSubnet2
+
+  # Internet Gateway
+  MacIgw:
+    Type: AWS::EC2::InternetGateway
+  MacIgwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref MacIgw
+      VpcId: !Ref MacVpc
+
+  # Public RouteTable
+  MacPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MacVpc
+      Tags:
+        - Key: Name
+          Value: MacPublicRouteTable
+  MacPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: MacIgwAttachment
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref MacPublicRouteTable
+      GatewayId: !Ref MacIgw
+
+  # Associate Public RouteTable. 
+  # No need Associate Private RouteTable because it will use default RouteTable.
+  MacPublicSubnet1RtAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref MacPublicSubnet1
+      RouteTableId: !Ref MacPublicRouteTable
+  MacPublicSubnet2RtAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref MacPublicSubnet2
+      RouteTableId: !Ref MacPublicRouteTable
