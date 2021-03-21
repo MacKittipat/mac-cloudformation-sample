@@ -1,54 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: A sample of setting up EC2 with public VPC
 
+Parameters:
+  MacVpcId:
+    Type: String
+  MacPublicSubnetId:
+    Type: String
+
 Resources:
-
-  MacVpc:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsHostnames: false
-      EnableDnsSupport: false
-
-  MacPublicSubnet: 
-    Type: AWS::EC2::Subnet
-    Properties: 
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
-      CidrBlock: 10.0.0.0/24
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref MacVpc
-
-  MacIgw:
-    Type: AWS::EC2::InternetGateway
-  MacIgwAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      InternetGatewayId: !Ref MacIgw
-      VpcId: !Ref MacVpc
-
-  MacPublicRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref MacVpc
-  MacPublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: MacIgwAttachment
-    Properties:
-      DestinationCidrBlock: 0.0.0.0/0
-      RouteTableId: !Ref MacPublicRouteTable
-      GatewayId: !Ref MacIgw
-
-  MacSubnetRtAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref MacPublicSubnet
-      RouteTableId: !Ref MacPublicRouteTable
 
   MacSg:
     Type: AWS::EC2::SecurityGroup
     Properties:
         GroupDescription: "Sample Sg"
-        VpcId: !Ref MacVpc
+        VpcId: !Ref MacVpcId
         SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -70,7 +35,7 @@ Resources:
           DeviceIndex: 0
           GroupSet: 
             - !Ref MacSg
-          SubnetId: !Ref MacPublicSubnet
+          SubnetId: !Ref MacPublicSubnetId
       UserData: 
         Fn::Base64: !Sub |
           #!/bin/bash -xe
