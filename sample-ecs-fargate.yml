@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  VpcId:
+    Type: String
+  SubnetId1:
+    Type: String
+
+Resources:
+  MacLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: MacLogGroup
+
+  MacEcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MacExecutionRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  MacContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: MacSecurityGroup
+      GroupDescription: Security group for container
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
+  # ECS Fargate
+  MacCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: MacCluster
+
+  MacTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: MacLogGroup
+    Properties:
+      Family: MacTaskDefinition
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !Ref MacEcsTaskExecutionRole
+      ContainerDefinitions:
+        - Name: MacDockerDefinition
+          Image: 917599803305.dkr.ecr.ap-southeast-1.amazonaws.com/mac-boot:latest
+          PortMappings:
+            - ContainerPort: 8080
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              # awslogs-group: !Ref MacLogGroup
+              awslogs-group: MacLogGroup
+              awslogs-stream-prefix: ecs
+      RequiresCompatibilities:
+        - FARGATE
+
+  MacService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: MacService
+      Cluster: !Ref MacCluster
+      TaskDefinition: !Ref MacTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetId1
+          SecurityGroups:
+            -  !Ref MacContainerSecurityGroup
