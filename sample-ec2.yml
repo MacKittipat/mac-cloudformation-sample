@@ -2,9 +2,9 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: A sample of setting up EC2 with public VPC
 
 Parameters:
-  MacVpcId:
+  VpcId:
     Type: String
-  MacPublicSubnetId:
+  PublicSubnetId:
     Type: String
 
 Resources:
@@ -13,7 +13,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
         GroupDescription: "Sample Sg"
-        VpcId: !Ref MacVpcId
+        VpcId: !Ref VpcId
         SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -35,7 +35,7 @@ Resources:
           DeviceIndex: 0
           GroupSet: 
             - !Ref MacSg
-          SubnetId: !Ref MacPublicSubnetId
+          SubnetId: !Ref PublicSubnetId
       UserData: 
         Fn::Base64: !Sub |
           #!/bin/bash -xe

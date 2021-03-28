@@ -4,9 +4,9 @@
 ```
 aws cloudformation create-stack --stack-name mac-sample-vpc --template-body file://sample-vpc.yml
 
-aws cloudformation create-stack --stack-name mac-sample-ec2 --template-body file://sample-ec2.yml --parameters ParameterKey=MacVpcId,ParameterValue=vpc-xxx ParameterKey=MacPublicSubnetId,ParameterValue=subnet-xxx
+aws cloudformation create-stack --stack-name mac-sample-ec2 --template-body file://sample-ec2.yml --parameters ParameterKey=VpcId,ParameterValue=vpc-xxx ParameterKey=PublicSubnetId,ParameterValue=subnet-xxx
 
-aws cloudformation create-stack --stack-name mac-sample-ecs-fargate --template-body file://sample-ecs-fargate.yml --parameters ParameterKey=VpcId,ParameterValue=vpc-xxx ParameterKey=SubnetId1,ParameterValue=subnet-xxx --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation create-stack --stack-name mac-sample-ecs-fargate --template-body file://sample-ecs-fargate.yml --parameters ParameterKey=VpcId,ParameterValue=vpc-xxx ParameterKey=SubnetId,ParameterValue=subnet-xxx --capabilities CAPABILITY_NAMED_IAM
 
 aws cloudformation update-stack --stack-name mac-sample-vpc --template-body file://sample-vpc.yml
 

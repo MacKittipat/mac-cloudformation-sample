@@ -3,10 +3,11 @@ AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
   VpcId:
     Type: String
-  SubnetId1:
+  SubnetId:
     Type: String
 
 Resources:
+
   MacLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -70,7 +71,6 @@ Resources:
             LogDriver: awslogs
             Options:
               awslogs-region: !Ref AWS::Region
-              # awslogs-group: !Ref MacLogGroup
               awslogs-group: MacLogGroup
               awslogs-stream-prefix: ecs
       RequiresCompatibilities:
@@ -88,6 +88,6 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           Subnets:
-            - !Ref SubnetId1
+            - !Ref SubnetId
           SecurityGroups:
             -  !Ref MacContainerSecurityGroup
