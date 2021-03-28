@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Default: HelloWorld
+  CognitoUserPoolDomain:
+    Type: String
+    Default: mac-hello-world
+  CognitoIdentifier:
+    Type: String
+    Default: https://localhost
+  ApiReadScope:
+    Type: String
+    Default: helloworld.read
+
+Resources:
+
+  # API Gateway
+  MacApiRestApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: HelloWorldApi
+
+  MacApiResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref MacApiRestApi
+      ParentId: !GetAtt MacApiRestApi.RootResourceId
+      PathPart: !Ref LambdaFunctionName
+
+  MacApiMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref MacApiResource
+      RestApiId: !Ref MacApiRestApi
+      ApiKeyRequired: false
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref MacApiAuthorizer
+      AuthorizationScopes:
+        - !Sub '${CognitoIdentifier}/${ApiReadScope}'
+      Integration:
+        ConnectionType: INTERNET
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST # Always POST for AWS_PROXY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MacLambdaFunction.Arn}/invocations'
+
+  MacApiDeployment:
+    DependsOn: MacApiMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref MacApiRestApi
+      StageName: prod
+
+  # API Gateway Authorizer
+  MacApiAuthorizer:
+    Type: 'AWS::ApiGateway::Authorizer'
+    Properties:
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      Name: DefaultAuthorizer
+      ProviderARNs:
+        - !GetAtt MacUserPool.Arn
+      RestApiId: !Ref MacApiRestApi
+
+  # Cognito
+  MacUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: MacUserPool
+
+  MacUserPoolResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      UserPoolId: !Ref MacUserPool
+      Identifier: !Ref CognitoIdentifier
+      Name: !Sub '${LambdaFunctionName}API'
+      Scopes:
+        - ScopeName: !Ref ApiReadScope
+          ScopeDescription: "Read API"
+
+  MacUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      AllowedOAuthFlows:
+        - client_credentials
+      AllowedOAuthScopes:
+        - !Sub '${CognitoIdentifier}/${ApiReadScope}'
+      GenerateSecret: true
+      ClientName: !Sub '${LambdaFunctionName}API'
+      SupportedIdentityProviders:
+        - COGNITO
+      UserPoolId: !Ref MacUserPool
+      RefreshTokenValidity: 1
+    DependsOn: MacUserPoolResourceServer
+
+  MacUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref MacUserPool
+      Domain: !Ref CognitoUserPoolDomain
+
+  # Lambda Function
+  MacLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Code:
+        ZipFile: |
+          exports.handler = async function(event) {
+            const response = {
+              statusCode: 200,
+              body: "Hello World. Build with CloudFormation",
+            };
+            return response;
+          }
+      Handler: index.handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/LambdaAdmin'
+      Runtime: nodejs12.x
+
+  MacLambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt MacLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MacApiRestApi}/*/*/${LambdaFunctionName}'
+
+Outputs:
+  LambdaFunctionHelloWorldArn:
+    Value: !GetAtt MacLambdaFunction.Arn
+  ApiGatewayRestApiHelloWorldRootResourceId:
+    Value: !GetAtt MacApiRestApi.RootResourceId
+  RefApiGatewayRestApiHelloWorld:
+    Value: !Ref MacApiRestApi
+  RefApiGatewayResourceHelloWorld:
+    Value: !Ref MacApiResource
+  RefLambdaFunctionHelloWorld:
+    Value: !Ref MacLambdaFunction
