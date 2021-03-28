@@ -34,10 +34,10 @@ curl -X POST --user {CLIENT_ID}:{CLIENT_SECRET} 'https://mac-hello-world.auth.ap
 * CLIENT_ID and CLIENT_SECRET is in `General settings > App clients`
 * SCOPE is in `General settings > App clients` under `Allowed Custom Scopes`
 
-After execute cloudformation template, you must click "Save app client changes" button to avoid {"error":"invalid_grant}"`
+After execute cloudformation template, you must click `Save app client changes` button to avoid `{"error":"invalid_grant}"`
 1. Open Congnito in AWS Web Console
-2. Click General settings > App Clients > Show Details 
-3. Click button "Save app client changes" before get token to avoid {"error":"invalid_grant"`
+2. Click menu `General settings > App Clients > Show Details`
+3. Click button `Save app client changes`
 
 ### Call Lambda
 ```
