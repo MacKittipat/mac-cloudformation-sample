@@ -3,8 +3,13 @@ AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
   VpcId:
     Type: String
-  SubnetId:
+  SubnetId1:
     Type: String
+  SubnetId2:
+    Type: String
+  AppPort:
+    Type: String
+    Default: '8080'
 
 Resources:
 
@@ -65,7 +70,7 @@ Resources:
         - Name: MacDockerDefinition
           Image: 917599803305.dkr.ecr.ap-southeast-1.amazonaws.com/mac-boot:latest
           PortMappings:
-            - ContainerPort: 8080
+            - ContainerPort: !Ref AppPort
               Protocol: tcp
           LogConfiguration:
             LogDriver: awslogs
@@ -78,6 +83,8 @@ Resources:
 
   MacService:
     Type: AWS::ECS::Service
+    DependsOn:
+      - MacAlbListener
     Properties:
       ServiceName: MacService
       Cluster: !Ref MacCluster
@@ -88,6 +95,49 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           Subnets:
-            - !Ref SubnetId
+            - !Ref SubnetId1
+            - !Ref SubnetId2
           SecurityGroups:
-            -  !Ref MacContainerSecurityGroup
+            - !Ref MacContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: MacDockerDefinition
+          ContainerPort: !Ref AppPort
+          TargetGroupArn: !Ref MacAlbTg
+
+  # ALB
+  MacAlbTg:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: '/'
+      HealthCheckProtocol: 'HTTP'
+      HealthCheckTimeoutSeconds: 30
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      Name: MacAlbTg
+      Port: !Ref AppPort
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VpcId
+
+  MacAlbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref MacAlbTg
+          Type: forward
+      LoadBalancerArn: !Ref MacAlb
+      Port: 80
+      Protocol: HTTP
+
+  MacAlb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: MacAlb
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref MacContainerSecurityGroup
+      Subnets:
+        - !Ref SubnetId1
+        - !Ref SubnetId2
