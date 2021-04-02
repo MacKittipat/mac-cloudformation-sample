@@ -1,13 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Parameters:
-  VpcId:
-    Type: String
-  SubnetId1:
-    Type: String
-  SubnetId2:
-    Type: String
-
 Resources:
   MacDb:
     Type: AWS::RDS::DBInstance
@@ -31,7 +23,7 @@ Resources:
     Properties:
       GroupName: MacDbSecurityGroup
       GroupDescription: Security group for DB
-      VpcId: !Ref VpcId
+      VpcId: !ImportValue MacVpc
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 5432
@@ -43,5 +35,10 @@ Resources:
     Properties:
       DBSubnetGroupDescription: MacDbSubnetGroup
       SubnetIds:
-        - !Ref SubnetId1
-        - !Ref SubnetId2
+        - !ImportValue MacPublicSubnet1
+        - !ImportValue MacPublicSubnet2
+
+Outputs:
+  MacDbEndpoint:
+    Description: RDS Endpoint
+    Value: !GetAtt MacDb.Endpoint.Address

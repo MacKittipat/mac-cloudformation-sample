@@ -113,7 +113,7 @@ Resources:
       Port: !Ref AppPort
       Protocol: HTTP
       TargetType: ip
-      VpcId: !Ref VpcId
+      VpcId: !ImportValue MacVpc
 
   MacAlbListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -135,3 +135,9 @@ Resources:
       Subnets:
         - !ImportValue MacPublicSubnet1
         - !ImportValue MacPublicSubnet2
+
+Outputs:
+  MacAlbDomain:
+    Description: Domain of ALB
+    Value: !GetAtt MacAlb.DNSName
+
