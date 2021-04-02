@@ -95,3 +95,17 @@ Resources:
     Properties:
       SubnetId: !Ref MacPublicSubnet2
       RouteTableId: !Ref MacPublicRouteTable
+
+Outputs:
+  MacVpc:
+    Value: !Ref MacVpc
+    Export:
+      Name: 'MacVpc'
+  MacPublicSubnet1:
+    Value: !Ref MacPublicSubnet1
+    Export:
+      Name: 'MacPublicSubnet1'
+  MacPublicSubnet2:
+    Value: !Ref MacPublicSubnet2
+    Export:
+      Name: 'MacPublicSubnet2'
