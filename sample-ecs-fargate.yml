@@ -1,12 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  VpcId:
-    Type: String
-  SubnetId1:
-    Type: String
-  SubnetId2:
-    Type: String
   AppPort:
     Type: String
     Default: '8080'
@@ -36,7 +30,7 @@ Resources:
     Properties:
       GroupName: MacSecurityGroup
       GroupDescription: Security group for container
-      VpcId: !Ref VpcId
+      VpcId: !ImportValue MacVpc
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -95,8 +89,8 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           Subnets:
-            - !Ref SubnetId1
-            - !Ref SubnetId2
+            - !ImportValue MacPublicSubnet1
+            - !ImportValue MacPublicSubnet2
           SecurityGroups:
             - !Ref MacContainerSecurityGroup
       LoadBalancers:
@@ -139,5 +133,5 @@ Resources:
       SecurityGroups:
         - !Ref MacContainerSecurityGroup
       Subnets:
-        - !Ref SubnetId1
-        - !Ref SubnetId2
+        - !ImportValue MacPublicSubnet1
+        - !ImportValue MacPublicSubnet2

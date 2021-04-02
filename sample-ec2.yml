@@ -4,7 +4,7 @@ Description: A sample of setting up EC2 with public VPC
 Parameters:
   VpcId:
     Type: String
-  PublicSubnetId:
+  SubnetId:
     Type: String
 
 Resources:
@@ -12,7 +12,7 @@ Resources:
   MacSg:
     Type: AWS::EC2::SecurityGroup
     Properties:
-        GroupDescription: "Sample Sg"
+        GroupDescription: "Mac Security Group"
         VpcId: !Ref VpcId
         SecurityGroupIngress:
         - IpProtocol: tcp
@@ -35,10 +35,15 @@ Resources:
           DeviceIndex: 0
           GroupSet: 
             - !Ref MacSg
-          SubnetId: !Ref PublicSubnetId
+          SubnetId: !Ref SubnetId
       UserData: 
         Fn::Base64: !Sub |
           #!/bin/bash -xe
           cd /home/ubuntu
           echo "hello" >> index.html
           python3 -m http.server 80
+
+Outputs:
+  MacEc2InstancePublicIp:
+    Description: Ip of EC2
+    Value: !GetAtt MacEc2Instance.PublicIp
