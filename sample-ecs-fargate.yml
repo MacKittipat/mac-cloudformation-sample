@@ -12,7 +12,7 @@ Resources:
     Properties:
       LogGroupName: MacLogGroup
 
-  MacEcsTaskExecutionRole:
+  MacEcsExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: MacExecutionRole
@@ -24,6 +24,19 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  MacEcsTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MacTaskRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+                - s3.amazonaws.com
+            Action: sts:AssumeRole
 
   MacContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -59,7 +72,8 @@ Resources:
       Cpu: 256
       Memory: 512
       NetworkMode: awsvpc
-      ExecutionRoleArn: !Ref MacEcsTaskExecutionRole
+      ExecutionRoleArn: !Ref MacEcsExecutionRole
+      TaskRoleArn: !Ref MacEcsTaskRole
       ContainerDefinitions:
         - Name: MacDockerDefinition
           Image: 917599803305.dkr.ecr.ap-southeast-1.amazonaws.com/mac-boot:latest
@@ -138,6 +152,10 @@ Resources:
 
 Outputs:
   MacAlbDomain:
-    Description: Domain of ALB
+    Description: ALB Domain
     Value: !GetAtt MacAlb.DNSName
-
+  MacEcsTaskRoleArn:
+    Description: ECS Task Role
+    Value: !GetAtt MacEcsTaskRole.Arn
+    Export:
+      Name: 'MacEcsTaskRoleArn'

@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+
+  BucketName:
+    Type: String
+    Default: mac-file-bucket
+
+Resources:
+
+  MacS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    DeletionPolicy: Delete
+
+  MacS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref MacS3Bucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetObject
+              - s3:PutObject
+            Effect: Allow
+            Principal:
+              AWS: !ImportValue MacEcsTaskRoleArn
+            Resource:
+              - !Sub "arn:aws:s3:::${BucketName}/*"
+          - Action:
+              - s3:ListBucket
+            Effect: Allow
+            Principal:
+              AWS: !ImportValue MacEcsTaskRoleArn
+            Resource:
+              - !Sub "arn:aws:s3:::${BucketName}"

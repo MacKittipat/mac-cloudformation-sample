@@ -8,6 +8,8 @@ aws cloudformation create-stack --stack-name mac-sample-ec2 --template-body file
 
 aws cloudformation create-stack --stack-name mac-sample-ecs-fargate --template-body file://sample-ecs-fargate.yml --capabilities CAPABILITY_NAMED_IAM
 
+aws cloudformation create-stack --stack-name mac-s3 --template-body file://sample-s3.yml
+
 aws cloudformation create-stack --stack-name mac-rds --template-body file://sample-rds.yml
 
 aws cloudformation create-stack --stack-name mac-lambda-cognito --template-body file://sample-lambda-cognito.yml
