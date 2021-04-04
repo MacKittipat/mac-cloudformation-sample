@@ -205,3 +205,8 @@ Outputs:
     Value: !Ref MacAlbListener
     Export:
       Name: 'MacAlbListenerArn'
+  MacPrivateNlbListenerArn:
+    Description: Private NLB Listener ARN
+    Value: !Ref MacPrivateNlbListener
+    Export:
+      Name: 'MacPrivateNlbListener'
