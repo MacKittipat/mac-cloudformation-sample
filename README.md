@@ -10,6 +10,8 @@ aws cloudformation create-stack --stack-name mac-sample-ecs-fargate --template-b
 
 aws cloudformation create-stack --stack-name mac-s3 --template-body file://sample-s3.yml
 
+aws cloudformation create-stack --stack-name mac-http-apigateway --template-body file://sample-http-apigateway.yml
+
 aws cloudformation create-stack --stack-name mac-rds --template-body file://sample-rds.yml
 
 aws cloudformation create-stack --stack-name mac-lambda-cognito --template-body file://sample-lambda-cognito.yml
@@ -47,3 +49,8 @@ After execute cloudformation template, you must click `Save app client changes` 
 ```
 curl -H "Authorization: {TOKEN}" {API_ENDPOINT}/HelloWorld
 ```
+
+### Reference 
+* https://github.com/MacKittipat/mac-boot-docker
+* https://github.com/1Strategy/fargate-cloudformation-example  
+* https://github.com/aws-samples/aws-apigw-http-api-private--integrations

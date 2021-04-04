@@ -109,3 +109,11 @@ Outputs:
     Value: !Ref MacPublicSubnet2
     Export:
       Name: 'MacPublicSubnet2'
+  MacPrivateSubnet1:
+    Value: !Ref MacPrivateSubnet1
+    Export:
+      Name: 'MacPrivateSubnet1'
+  MacPrivateSubnet2:
+    Value: !Ref MacPrivateSubnet2
+    Export:
+      Name: 'MacPrivateSubnet2'

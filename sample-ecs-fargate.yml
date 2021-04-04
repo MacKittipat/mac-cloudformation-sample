@@ -155,7 +155,12 @@ Outputs:
     Description: ALB Domain
     Value: !GetAtt MacAlb.DNSName
   MacEcsTaskRoleArn:
-    Description: ECS Task Role
+    Description: ECS Task Role ARN
     Value: !GetAtt MacEcsTaskRole.Arn
     Export:
       Name: 'MacEcsTaskRoleArn'
+  MacAlbListenerArn:
+    Description: ALB Listener ARN
+    Value: !Ref MacAlbListener
+    Export:
+      Name: 'MacAlbListenerArn'
