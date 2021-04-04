@@ -93,6 +93,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn:
       - MacAlbListener
+      - MacPrivateNlbTg
     Properties:
       ServiceName: MacService
       Cluster: !Ref MacCluster
@@ -111,8 +112,11 @@ Resources:
         - ContainerName: MacDockerDefinition
           ContainerPort: !Ref AppPort
           TargetGroupArn: !Ref MacAlbTg
+        - ContainerName: MacDockerDefinition
+          ContainerPort: !Ref AppPort
+          TargetGroupArn: !Ref MacPrivateNlbTg
 
-  # ALB
+  # Public ALB
   MacAlbTg:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -144,11 +148,48 @@ Resources:
     Properties:
       Name: MacAlb
       Scheme: internet-facing
+      Type: application
       SecurityGroups:
         - !Ref MacContainerSecurityGroup
       Subnets:
         - !ImportValue MacPublicSubnet1
         - !ImportValue MacPublicSubnet2
+
+  # Private NLB
+  MacPrivateNlbTg:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckProtocol: 'TCP'
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 10
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      Name: MacPrivateNlbTg
+      Port: !Ref AppPort
+      Protocol: TCP
+      TargetType: ip
+      VpcId: !ImportValue MacVpc
+
+  MacPrivateNlbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref MacPrivateNlbTg
+          Type: forward
+      LoadBalancerArn: !Ref MacPrivateNlb
+      Port: 80
+      Protocol: TCP
+
+  MacPrivateNlb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: MacPrivateNlb
+      Scheme: internal
+      Type: network
+      Subnets:
+        - !ImportValue MacPrivateSubnet1
+        - !ImportValue MacPrivateSubnet2
 
 Outputs:
   MacAlbDomain:

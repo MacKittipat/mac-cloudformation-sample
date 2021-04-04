@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+
+  MacApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: MacApi
+      ProtocolType: HTTP
+
+  MacApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MacApi
+      RouteKey: 'ANY /'
+      Target: !Sub 'integrations/${MacApiIntegration}'
+
+  MacApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MacApi
+      Description: HTTP Proxy Integration
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      ConnectionType: VPC_LINK
+      IntegrationUri:
+        !ImportValue MacAlbListenerArn
+      ConnectionId:
+        !Ref MacApiVpcLink
+      PayloadFormatVersion: '1.0'
+
+  MacApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: $default
+      AutoDeploy: true
+      ApiId: !Ref MacApi
+
+  MacApiVpcLink:
+    Type: AWS::ApiGatewayV2::VpcLink
+    Properties:
+      Name: MacApiVpcLink
+      SecurityGroupIds:
+        - !Ref MacVpcLinkSecurityGroup
+      SubnetIds:
+        - !ImportValue MacPublicSubnet1
+        - !ImportValue MacPublicSubnet2
+
+  MacVpcLinkSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: MacVpcLinkSecurityGroup
+      GroupDescription: Security group for VPC Link
+      VpcId: !ImportValue MacVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  MacApiUrl:
+    Description: Api Gateway URL
+    Value: !Sub https://${MacApi}.execute-api.${AWS::Region}.amazonaws.com/
