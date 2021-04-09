@@ -78,20 +78,6 @@ Resources:
           ToPort: 8080
           CidrIp: 0.0.0.0/0
 
-  # API Authorizer
-  MacAuthorizer:
-    Type: AWS::ApiGatewayV2::Authorizer
-    Properties:
-      Name: MacApiAuthorizer
-      ApiId: !Ref MacApi
-      AuthorizerType: JWT
-      IdentitySource:
-        - $request.header.Authorization
-      JwtConfiguration:
-        Audience:
-          - !Ref MacUserPoolClient
-        Issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${MacUserPool}'
-
   # Cognito
   MacUserPool:
     Type: AWS::Cognito::UserPool
@@ -109,6 +95,7 @@ Resources:
           ScopeDescription: "Read API"
 
   MacUserPoolClient:
+    DependsOn: MacUserPoolResourceServer
     Type: AWS::Cognito::UserPoolClient
     Properties:
       AllowedOAuthFlows:
@@ -121,13 +108,30 @@ Resources:
         - COGNITO
       UserPoolId: !Ref MacUserPool
       RefreshTokenValidity: 1
-    DependsOn: MacUserPoolResourceServer
 
   MacUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
       UserPoolId: !Ref MacUserPool
       Domain: !Ref CognitoUserPoolDomain
+
+  # API Authorizer
+  MacAuthorizer:
+    DependsOn:
+      - MacApi
+      - MacUserPoolClient
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      Name: MacApiAuthorizer
+      ApiId: !Ref MacApi
+      AuthorizerType: JWT
+      IdentitySource:
+        - $request.header.Authorization
+      JwtConfiguration:
+        Audience:
+          - !Ref MacUserPoolClient
+        Issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${MacUserPool}'
+
 
 Outputs:
   MacApiUrl:
