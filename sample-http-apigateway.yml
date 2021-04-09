@@ -26,6 +26,8 @@ Resources:
       ApiId: !Ref MacApi
       RouteKey: 'ANY /{proxy+}'
       Target: !Sub 'integrations/${MacApiIntegration}'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref MacAuthorizer
 
   MacApiIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -117,9 +119,6 @@ Resources:
 
   # API Authorizer
   MacAuthorizer:
-    DependsOn:
-      - MacApi
-      - MacUserPoolClient
     Type: AWS::ApiGatewayV2::Authorizer
     Properties:
       Name: MacApiAuthorizer
