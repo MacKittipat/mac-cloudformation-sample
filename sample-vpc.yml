@@ -67,6 +67,33 @@ Resources:
       InternetGatewayId: !Ref MacIgw
       VpcId: !Ref MacVpc
 
+  # NAT Gateway
+  MacNatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt MacNatGatewayAttach1.AllocationId
+      SubnetId: !Ref MacPublicSubnet1
+      Tags:
+        - Key: Name
+          Value: MacNatGateway1
+  MacNatGatewayAttach1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  MacNatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt MacNatGatewayAttach2.AllocationId
+      SubnetId: !Ref MacPublicSubnet2
+      Tags:
+        - Key: Name
+          Value: MacNatGateway2
+  MacNatGatewayAttach2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
   # Public RouteTable
   MacPublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -83,8 +110,36 @@ Resources:
       RouteTableId: !Ref MacPublicRouteTable
       GatewayId: !Ref MacIgw
 
-  # Associate Public RouteTable. 
-  # No need Associate Private RouteTable because it will use default RouteTable.
+  # Private RouteTable
+  MacPrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MacVpc
+      Tags:
+        - Key: Name
+          Value: MacPrivateRouteTable1
+  MacPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref MacPrivateRouteTable1
+      NatGatewayId: !Ref MacNatGateway1
+
+  MacPrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MacVpc
+      Tags:
+        - Key: Name
+          Value: MacPrivateRouteTable2
+  MacPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref MacPrivateRouteTable2
+      NatGatewayId: !Ref MacNatGateway2
+
+  # Associate Public RouteTable.
   MacPublicSubnet1RtAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -95,6 +150,18 @@ Resources:
     Properties:
       SubnetId: !Ref MacPublicSubnet2
       RouteTableId: !Ref MacPublicRouteTable
+
+  # Associate Private RouteTable.
+  MacPrivateSubnet1RtAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref MacPrivateSubnet1
+      RouteTableId: !Ref MacPrivateRouteTable1
+  MacPrivateSubnet2RtAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref MacPrivateSubnet2
+      RouteTableId: !Ref MacPrivateRouteTable2
 
 Outputs:
   MacVpc:
