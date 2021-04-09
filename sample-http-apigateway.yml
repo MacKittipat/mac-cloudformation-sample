@@ -1,7 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
+Parameters:
+  CognitoUserPoolDomain:
+    Type: String
+    Default: mac-hello-world
+  CognitoIdentifier:
+    Type: String
+    Default: https://localhost
+  ApiReadScope:
+    Type: String
+    Default: helloworld.read
+
 Resources:
 
+  # HTTP API Gateway
   MacApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
@@ -65,6 +77,57 @@ Resources:
           FromPort: 8080
           ToPort: 8080
           CidrIp: 0.0.0.0/0
+
+  # API Authorizer
+  MacAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      Name: MacApiAuthorizer
+      ApiId: !Ref MacApi
+      AuthorizerType: JWT
+      IdentitySource:
+        - $request.header.Authorization
+      JwtConfiguration:
+        Audience:
+          - !Ref MacUserPoolClient
+        Issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${MacUserPool}'
+
+  # Cognito
+  MacUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: MacUserPool
+
+  MacUserPoolResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      UserPoolId: !Ref MacUserPool
+      Identifier: !Ref CognitoIdentifier
+      Name: !Sub 'MacAPI'
+      Scopes:
+        - ScopeName: !Ref ApiReadScope
+          ScopeDescription: "Read API"
+
+  MacUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      AllowedOAuthFlows:
+        - client_credentials
+      AllowedOAuthScopes:
+        - !Sub '${CognitoIdentifier}/${ApiReadScope}'
+      GenerateSecret: true
+      ClientName: !Sub 'MacAPI'
+      SupportedIdentityProviders:
+        - COGNITO
+      UserPoolId: !Ref MacUserPool
+      RefreshTokenValidity: 1
+    DependsOn: MacUserPoolResourceServer
+
+  MacUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref MacUserPool
+      Domain: !Ref CognitoUserPoolDomain
 
 Outputs:
   MacApiUrl:
