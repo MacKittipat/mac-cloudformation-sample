@@ -8,6 +8,8 @@ aws cloudformation create-stack --stack-name mac-sample-ec2 --template-body file
 
 aws cloudformation create-stack --stack-name mac-sample-ecs-fargate --template-body file://sample-ecs-fargate.yml --capabilities CAPABILITY_NAMED_IAM
 
+aws cloudformation create-stack --stack-name mac-sample-ecs-fargate-private --template-body file://sample-ecs-fargate-private.yml --capabilities CAPABILITY_NAMED_IAM
+
 aws cloudformation create-stack --stack-name mac-s3 --template-body file://sample-s3.yml
 
 aws cloudformation create-stack --stack-name mac-http-apigateway --template-body file://sample-http-apigateway.yml
@@ -54,3 +56,4 @@ curl -H "Authorization: {TOKEN}" {API_ENDPOINT}/HelloWorld
 * https://github.com/MacKittipat/mac-boot-docker
 * https://github.com/1Strategy/fargate-cloudformation-example  
 * https://github.com/aws-samples/aws-apigw-http-api-private--integrations
+* https://github.com/nathanpeck/ecs-cloudformation
