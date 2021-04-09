@@ -93,7 +93,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn:
       - MacAlbListener
-      - MacPrivateNlbTg
+      - MacPrivateNlbListener
     Properties:
       ServiceName: MacService
       Cluster: !Ref MacCluster
