@@ -41,9 +41,10 @@ Resources:
   MacContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: MacSecurityGroup
+      GroupName: MacContainerSecurityGroup
       GroupDescription: Security group for container
       VpcId: !ImportValue MacVpc
+      # Allow access to container public IP from the Internet
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80

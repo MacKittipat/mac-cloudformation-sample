@@ -41,8 +41,28 @@ Resources:
   MacContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: MacSecurityGroup
+      GroupName: MacContainerSecurityGroup
       GroupDescription: Security group for container
+      VpcId: !ImportValue MacVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 10.0.0.0/16
+
+  MacAlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: MacAlbSecurityGroup
+      GroupDescription: Security group for ALB
       VpcId: !ImportValue MacVpc
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -143,10 +163,10 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: MacAlb
-      Scheme: internal
+      Scheme: internet-facing
       Type: application
       SecurityGroups:
-        - !Ref MacContainerSecurityGroup
+        - !Ref MacAlbSecurityGroup
       Subnets:
         - !ImportValue MacPublicSubnet1
         - !ImportValue MacPublicSubnet2

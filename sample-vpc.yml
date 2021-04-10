@@ -68,15 +68,15 @@ Resources:
       VpcId: !Ref MacVpc
 
   # NAT Gateway
-  MacNatGateway1:
+  MacNatGateway:
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt MacNatGatewayAttach1.AllocationId
+      AllocationId: !GetAtt MacNatGatewayAttach.AllocationId
       SubnetId: !Ref MacPublicSubnet1
       Tags:
         - Key: Name
-          Value: MacNatGateway1
-  MacNatGatewayAttach1:
+          Value: MacNatGateway
+  MacNatGatewayAttach:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
@@ -98,19 +98,19 @@ Resources:
       GatewayId: !Ref MacIgw
 
   # Private RouteTable
-  MacPrivateRouteTable1:
+  MacPrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref MacVpc
       Tags:
         - Key: Name
-          Value: MacPrivateRouteTable1
-  MacPrivateRoute1:
+          Value: MacPrivateRouteTable
+  MacPrivateRoute:
     Type: AWS::EC2::Route
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
-      RouteTableId: !Ref MacPrivateRouteTable1
-      NatGatewayId: !Ref MacNatGateway1
+      RouteTableId: !Ref MacPrivateRouteTable
+      NatGatewayId: !Ref MacNatGateway
 
   # Associate Public RouteTable.
   MacPublicSubnet1RtAssociation:
@@ -129,12 +129,12 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref MacPrivateSubnet1
-      RouteTableId: !Ref MacPrivateRouteTable1
+      RouteTableId: !Ref MacPrivateRouteTable
   MacPrivateSubnet2RtAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref MacPrivateSubnet2
-      RouteTableId: !Ref MacPrivateRouteTable1
+      RouteTableId: !Ref MacPrivateRouteTable
 
 Outputs:
   MacVpc:
