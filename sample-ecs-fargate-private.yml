@@ -35,8 +35,10 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
-                - s3.amazonaws.com
             Action: sts:AssumeRole
+      # We don't need this because s3 has bucket policy.
+#      ManagedPolicyArns:
+#        - arn:aws:iam::aws:policy/AmazonS3FullAccess
 
   MacContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
