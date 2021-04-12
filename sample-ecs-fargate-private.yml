@@ -36,9 +36,21 @@ Resources:
               Service:
                 - ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
-      # We don't need this because s3 has bucket policy.
-#      ManagedPolicyArns:
-#        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+        - PolicyName: MacTaskRolePolicy
+          PolicyDocument:
+            Statement:
+              - Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:s3:::mac-file-bucket/*"
+              - Action:
+                  - s3:ListBucket
+                Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:s3:::mac-file-bucket"
 
   MacContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup

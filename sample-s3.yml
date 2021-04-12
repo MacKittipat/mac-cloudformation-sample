@@ -20,24 +20,24 @@ Resources:
         RestrictPublicBuckets: true
     DeletionPolicy: Delete
 
-  MacS3BucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref MacS3Bucket
-      PolicyDocument:
-        Statement:
-          - Action:
-              - s3:GetObject
-              - s3:PutObject
-            Effect: Allow
-            Principal:
-              AWS: !ImportValue MacEcsTaskRoleArn
-            Resource:
-              - !Sub "arn:aws:s3:::${BucketName}/*"
-          - Action:
-              - s3:ListBucket
-            Effect: Allow
-            Principal:
-              AWS: !ImportValue MacEcsTaskRoleArn
-            Resource:
-              - !Sub "arn:aws:s3:::${BucketName}"
+#  MacS3BucketPolicy:
+#    Type: AWS::S3::BucketPolicy
+#    Properties:
+#      Bucket: !Ref MacS3Bucket
+#      PolicyDocument:
+#        Statement:
+#          - Action:
+#              - s3:GetObject
+#              - s3:PutObject
+#            Effect: Allow
+#            Principal:
+#              AWS: !ImportValue MacEcsTaskRoleArn
+#            Resource:
+#              - !Sub "arn:aws:s3:::${BucketName}/*"
+#          - Action:
+#              - s3:ListBucket
+#            Effect: Allow
+#            Principal:
+#              AWS: !ImportValue MacEcsTaskRoleArn
+#            Resource:
+#              - !Sub "arn:aws:s3:::${BucketName}"
