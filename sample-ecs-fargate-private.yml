@@ -146,30 +146,6 @@ Resources:
           ContainerPort: !Ref AppPort
           TargetGroupArn: !Ref MacAlbTg
 
-  # Autoscaling
-  MacEcsAutoScalingTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MinCapacity: 1
-      MaxCapacity: 2
-      ResourceId: !Sub 'service/${MacCluster}/${MacService.Name}'
-      ScalableDimension: ecs:service:DesiredCount
-      ServiceNamespace: ecs
-      RoleARN: !GetAtt MacEcsExecutionRole.Arn
-  MacEcsAutoScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: MacEcsAutoScalingPolicy
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref MacEcsAutoScalingTarget
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ECSServiceAverageCPUUtilization
-        ScaleInCooldown: 15
-        ScaleOutCooldown: 15
-        # Start scaling if CPC usage > 50%
-        TargetValue: 50
-
   # Public ALB
   MacAlbTg:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
