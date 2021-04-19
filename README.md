@@ -40,7 +40,7 @@ curl -X POST --user {CLIENT_ID}:{CLIENT_SECRET} 'https://mac-hello-world.auth.ap
 
 * COGNITO_DOMAIN is in `General settings > Domain name`
 * CLIENT_ID and CLIENT_SECRET is in `General settings > App clients`
-* SCOPE is in `General settings > App clients` under `Allowed Custom Scopes`
+* SCOPE is in `General settings > App client settings` under `Allowed Custom Scopes`
 
 After execute cloudformation template, you must click `Save app client changes` button to avoid `{"error":"invalid_grant}"`
 1. Open Congnito in AWS Web Console
