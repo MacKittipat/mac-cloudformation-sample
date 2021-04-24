@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A sample of setting public and private VPC
+
+Resources:
+
+  MacKmsAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/MacKms
+      TargetKeyId: !GetAttr MacKmsKey.Arn
+
+  MacKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'Mac Kms Key'
+      EnableKeyRotation: false
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: key-default-1
+        Statement:
+          - Sid: Enable All Permissions
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+                - !ImportValue MacEcsTaskRoleArn
+            Action: kms:*
+            Resource: '*'
+
+Outputs:
+  MacVpc:
+    Value: !Ref MacVpc
+    Export:
+      Name: 'MacVpc'
+  MacPublicSubnet1:
+    Value: !Ref MacPublicSubnet1
+    Export:
+      Name: 'MacPublicSubnet1'
+  MacPublicSubnet2:
+    Value: !Ref MacPublicSubnet2
+    Export:
+      Name: 'MacPublicSubnet2'
+  MacPrivateSubnet1:
+    Value: !Ref MacPrivateSubnet1
+    Export:
+      Name: 'MacPrivateSubnet1'
+  MacPrivateSubnet2:
+    Value: !Ref MacPrivateSubnet2
+    Export:
+      Name: 'MacPrivateSubnet2'
