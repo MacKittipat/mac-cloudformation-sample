@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
   AppPort:
     Type: String
-    Default: '8080'
+    Default: '80'
 
 Resources:
 
@@ -58,6 +58,7 @@ Resources:
       GroupName: MacContainerSecurityGroup
       GroupDescription: Security group for container
       VpcId: !ImportValue MacVpc
+      # Allow access to container from within VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -71,26 +72,6 @@ Resources:
           FromPort: 8080
           ToPort: 8080
           CidrIp: 10.0.0.0/16
-
-  MacAlbSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: MacAlbSecurityGroup
-      GroupDescription: Security group for ALB
-      VpcId: !ImportValue MacVpc
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
-          CidrIp: 0.0.0.0/0
 
   # ECS Fargate
   MacCluster:
@@ -110,7 +91,8 @@ Resources:
       TaskRoleArn: !Ref MacEcsTaskRole
       ContainerDefinitions:
         - Name: MacDockerDefinition
-          Image: 917599803305.dkr.ecr.ap-southeast-1.amazonaws.com/mac-boot:latest
+          # Image: 917599803305.dkr.ecr.ap-southeast-1.amazonaws.com/mac-boot:latest
+          Image: httpd:latest
           PortMappings:
             - ContainerPort: !Ref AppPort
               Protocol: tcp
@@ -126,7 +108,7 @@ Resources:
   MacService:
     Type: AWS::ECS::Service
     DependsOn:
-      - MacAlbListener
+      - MacPrivateNlbListener
     Properties:
       ServiceName: MacService
       Cluster: !Ref MacCluster
@@ -144,58 +126,55 @@ Resources:
       LoadBalancers:
         - ContainerName: MacDockerDefinition
           ContainerPort: !Ref AppPort
-          TargetGroupArn: !Ref MacAlbTg
+          TargetGroupArn: !Ref MacPrivateNlbTg
 
-  # Public ALB
-  MacAlbTg:
+  # Private NLB
+  MacPrivateNlbTg:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 60
-      HealthCheckPath: '/'
-      HealthCheckProtocol: 'HTTP'
-      HealthCheckTimeoutSeconds: 30
+      HealthCheckProtocol: 'TCP'
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 10
       UnhealthyThresholdCount: 2
       HealthyThresholdCount: 2
-      Name: MacAlbTg
+      Name: MacPrivateNlbTg
       Port: !Ref AppPort
-      Protocol: HTTP
+      Protocol: TCP
       TargetType: ip
       VpcId: !ImportValue MacVpc
 
-  MacAlbListener:
+  MacPrivateNlbListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-        - TargetGroupArn: !Ref MacAlbTg
+        - TargetGroupArn: !Ref MacPrivateNlbTg
           Type: forward
-      LoadBalancerArn: !Ref MacAlb
+      LoadBalancerArn: !Ref MacPrivateNlb
       Port: 80
-      Protocol: HTTP
+      Protocol: TCP
 
-  MacAlb:
+  MacPrivateNlb:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: MacAlb
-      Scheme: internet-facing
-      Type: application
-      SecurityGroups:
-        - !Ref MacAlbSecurityGroup
+      Name: MacPrivateNlb
+      Scheme: internal
+      Type: network
       Subnets:
-        - !ImportValue MacPublicSubnet1
-        - !ImportValue MacPublicSubnet2
+        - !ImportValue MacPrivateSubnet1
+        - !ImportValue MacPrivateSubnet2
 
 Outputs:
-  MacAlbDomain:
-    Description: ALB Domain
-    Value: !GetAtt MacAlb.DNSName
+  MacNlbDomain:
+    Description: NLB Domain
+    Value: !GetAtt MacPrivateNlb.DNSName
   MacEcsTaskRoleArn:
     Description: ECS Task Role ARN
     Value: !GetAtt MacEcsTaskRole.Arn
     Export:
       Name: 'MacEcsTaskRoleArn'
-  MacAlbListenerArn:
-    Description: ALB Listener ARN
-    Value: !Ref MacAlbListener
+  MacPrivateNlbListenerArn:
+    Description: NLB Listener ARN
+    Value: !Ref MacPrivateNlbListener
     Export:
-      Name: 'MacAlbListenerArn'
+      Name: 'MacPrivateNlbListener'

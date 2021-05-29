@@ -1,26 +1,29 @@
 # CloudFormation Sample
 
-## Run cloudformation
+## Execute CloudFormation Template
 ```
+// Setup VPC 
 aws cloudformation create-stack --stack-name mac-sample-vpc --template-body file://sample-vpc.yml
 
+// Setup servers and services
 aws cloudformation create-stack --stack-name mac-sample-ec2 --template-body file://sample-ec2.yml --parameters ParameterKey=VpcId,ParameterValue=vpc-xxx ParameterKey=SubnetId,ParameterValue=subnet-xxx
 
 aws cloudformation create-stack --stack-name mac-sample-ecs-fargate --template-body file://sample-ecs-fargate.yml --capabilities CAPABILITY_NAMED_IAM
 
 aws cloudformation create-stack --stack-name mac-sample-ecs-fargate-private --template-body file://sample-ecs-fargate-private.yml --capabilities CAPABILITY_NAMED_IAM
 
+// Setup other resources
 aws cloudformation create-stack --stack-name mac-s3 --template-body file://sample-s3.yml
 
 aws cloudformation create-stack --stack-name mac-http-apigateway --template-body file://sample-http-apigateway.yml
+
+aws cloudformation create-stack --stack-name sample-private-nlb --template-body file://sample-private-nlb.yml
 
 aws cloudformation create-stack --stack-name mac-rds --template-body file://sample-rds.yml
 
 aws cloudformation create-stack --stack-name mac-lambda-cognito --template-body file://sample-lambda-cognito.yml
 
-aws cloudformation update-stack --stack-name mac-sample-vpc --template-body file://sample-vpc.yml
-
-aws cloudformation delete-stack --stack-name mac-sample-vpc 
+aws cloudformation create-stack --stack-name mac-kms --template-body file://sample-kms.yml
 ```
 
 ## Connect to EC2
