@@ -13,6 +13,9 @@ aws cloudformation create-stack --stack-name mac-sample-ecs-fargate --template-b
 aws cloudformation create-stack --stack-name mac-sample-ecs-fargate-private --template-body file://sample-ecs-fargate-private.yml --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation create-stack --stack-name mac-http-apigateway --template-body file://sample-http-apigateway.yml
 
+// API Gateway
+aws cloudformation create-stack --stack-name sample-public-rest-api --template-body file://sample-public-rest-api.yml
+
 // Setup other resources
 aws cloudformation create-stack --stack-name mac-s3 --template-body file://sample-s3.yml
 
