@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Default: HelloWorld
+  ApiStagenName:
+    Type: String
+    Default: prod
+
+Resources:
+
+  # API Gateway
+  MacApiRestApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: MacApiRestApi
+
+  MacApiResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref MacApiRestApi
+      ParentId: !GetAtt MacApiRestApi.RootResourceId
+      PathPart: !Ref LambdaFunctionName
+
+  MacApiMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref MacApiResource
+      RestApiId: !Ref MacApiRestApi
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        ConnectionType: INTERNET
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST # Always POST for AWS_PROXY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MacLambdaFunction.Arn}/invocations'
+
+  MacApiDeployment:
+    DependsOn: MacApiMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref MacApiRestApi
+      StageName: !Ref ApiStagenName
+
+  # Lambda Function
+  MacLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Code:
+        ZipFile: |
+          exports.handler = async function(event) {
+            const response = {
+              statusCode: 200,
+              body: "Hello World. Build with CloudFormation",
+            };
+            return response;
+          }
+      Handler: index.handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/LambdaAdmin'
+      Runtime: nodejs12.x
+
+  MacLambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt MacLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MacApiRestApi}/*/*/${LambdaFunctionName}'
+
+Outputs:
+  LambdaFunctionArn:
+    Value: !GetAtt MacLambdaFunction.Arn
+  ApiEndpoint:
+    Description: "API Prod stage endpoint"
+    Value: !Sub "https://${MacApiRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiStagenName}/${LambdaFunctionName}"
