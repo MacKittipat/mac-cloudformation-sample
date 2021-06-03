@@ -95,7 +95,8 @@ Resources:
       ContainerDefinitions:
         - Name: MacDockerDefinition
           # Image: 917599803305.dkr.ecr.ap-southeast-1.amazonaws.com/mac-boot:latest
-          Image: httpd:latest
+          # Image: httpd:latest
+          Image: devpro9/mac-boot:latest
           PortMappings:
             - ContainerPort: !Ref AppPort
               Protocol: tcp
