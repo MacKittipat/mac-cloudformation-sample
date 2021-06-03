@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  AppPort:
+    Type: Number
+    Default: 5050
+  HostPort:
+    Type: Number
+    Default: 80
+Resources:
+
+  MacLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: MacLogGroup
+
+  MacEcsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MacExecutionRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  MacEcsTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MacTaskRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+
+  MacContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: MacContainerSecurityGroup
+      GroupDescription: Security group for container
+      VpcId: !ImportValue MacVpc
+      # Allow access to container from within VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: !Ref AppPort
+          ToPort: !Ref AppPort
+          CidrIp: 10.0.0.0/16
+
+  # ECS Fargate
+  MacCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: MacCluster
+
+  MacTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: MacLogGroup
+    Properties:
+      Family: MacTaskDefinition
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !Ref MacEcsExecutionRole
+      TaskRoleArn: !Ref MacEcsTaskRole
+      ContainerDefinitions:
+        - Name: MacDockerDefinition
+          # Image: 917599803305.dkr.ecr.ap-southeast-1.amazonaws.com/mac-boot:latest
+#          Image: httpd:latest
+          Image: vad1mo/hello-world-rest:latest
+          PortMappings:
+            - ContainerPort: !Ref AppPort
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: MacLogGroup
+              awslogs-stream-prefix: ecs
+      RequiresCompatibilities:
+        - FARGATE
+
+  MacService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - MacPrivateAlbListener
+    Properties:
+      ServiceName: MacService
+      Cluster: !Ref MacCluster
+      TaskDefinition: !Ref MacTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !ImportValue MacPrivateSubnet1
+            - !ImportValue MacPrivateSubnet2
+          SecurityGroups:
+            - !Ref MacContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: MacDockerDefinition
+          ContainerPort: !Ref AppPort
+          TargetGroupArn: !Ref MacPrivateAlbTg
+
+  # Private ALB
+  MacPrivateAlbTg:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: '/'
+      HealthCheckProtocol: 'HTTP'
+      HealthCheckTimeoutSeconds: 30
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      Name: MacPrivateAlbTg
+      Port: !Ref AppPort
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !ImportValue MacVpc
+
+  MacPrivateAlbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref MacPrivateAlbTg
+          Type: forward
+      LoadBalancerArn: !Ref MacPrivateAlb
+      Port: !Ref HostPort
+      Protocol: HTTP
+
+  MacPrivateAlb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: MacPrivateAlb
+      Scheme: internal
+      Type: application
+      SecurityGroups:
+        - !Ref MacContainerSecurityGroup
+      Subnets:
+        - !ImportValue MacPrivateSubnet1
+        - !ImportValue MacPrivateSubnet2
+
+Outputs:
+  MacPrivateAlbDomain:
+    Description: ALB Domain
+    Value: !GetAtt MacPrivateAlb.DNSName
+  MacEcsTaskRoleArn:
+    Description: ECS Task Role ARN
+    Value: !GetAtt MacEcsTaskRole.Arn
+    Export:
+      Name: 'MacEcsTaskRoleArn'
+  MacPrivateAlbListenerArn:
+    Description: ALB Listener ARN
+    Value: !Ref MacPrivateAlbListener
+    Export:
+      Name: 'MacPrivateAlbListenerArn'

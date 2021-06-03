@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+
+  # HTTP API Gateway
+  MacApiHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: MacApiHttpApi
+      ProtocolType: HTTP
+
+  MacApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MacApiHttpApi
+      RouteKey: 'ANY /{proxy+}'
+      Target: !Sub 'integrations/${MacApiIntegration}'
+
+  MacApiCustomRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MacApiHttpApi
+      RouteKey: 'ANY /mac/{proxy+}'
+      Target: !Sub 'integrations/${MacApiIntegration}'
+
+  MacApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MacApiHttpApi
+      Description: HTTP Proxy Integration
+      # https://docs.aws.amazon.com/apigatewayv2/latest/api-reference/apis-apiid-integrations-integrationid.html
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      IntegrationUri:
+        !ImportValue MacPrivateAlbListenerArn
+      ConnectionType: VPC_LINK
+      ConnectionId:
+        !Ref MacApiVpcLink
+      PayloadFormatVersion: '1.0'
+
+  MacApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: $default
+      AutoDeploy: true
+      ApiId: !Ref MacApiHttpApi
+
+  MacApiVpcLink:
+    Type: AWS::ApiGatewayV2::VpcLink
+    Properties:
+      Name: MacApiVpcLink
+      SecurityGroupIds:
+        - !Ref MacVpcLinkSecurityGroup
+      SubnetIds:
+        - !ImportValue MacPrivateSubnet1
+        - !ImportValue MacPrivateSubnet2
+
+  MacVpcLinkSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: MacVpcLinkSecurityGroup
+      GroupDescription: Security group for VPC Link
+      VpcId: !ImportValue MacVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5050
+          ToPort: 5050
+          CidrIp: 0.0.0.0/0
+Outputs:
+  MacApiUrl:
+    Description: Api Gateway URL
+    Value: !Sub https://${MacApiHttpApi}.execute-api.${AWS::Region}.amazonaws.com/
+  MacApiCustomUrl:
+    Description: Api Gateway URL
+    Value: !Sub https://${MacApiHttpApi}.execute-api.${AWS::Region}.amazonaws.com/mac/

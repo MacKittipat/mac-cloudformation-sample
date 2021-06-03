@@ -165,7 +165,7 @@ Resources:
         - !ImportValue MacPrivateSubnet2
 
 Outputs:
-  MacNlbDomain:
+  MacPrivateNlbDomain:
     Description: NLB Domain
     Value: !GetAtt MacPrivateNlb.DNSName
   MacEcsTaskRoleArn:
