@@ -2,8 +2,11 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
   AppPort:
-    Type: String
-    Default: '80'
+    Type: Number
+    Default: 8080
+  HostPort:
+    Type: Number
+    Default: 80
 
 Resources:
 
@@ -54,8 +57,8 @@ Resources:
           ToPort: 443
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+          FromPort: AppPort
+          ToPort: AppPort
           CidrIp: 0.0.0.0/0
 
   # ECS Fargate
@@ -77,7 +80,8 @@ Resources:
       ContainerDefinitions:
         - Name: MacDockerDefinition
           # Image: 917599803305.dkr.ecr.ap-southeast-1.amazonaws.com/mac-boot:latest
-          Image: httpd:latest
+#          Image: httpd:latest
+          Image: devpro9/mac-boot:latest
           PortMappings:
             - ContainerPort: !Ref AppPort
               Protocol: tcp
@@ -137,7 +141,7 @@ Resources:
         - TargetGroupArn: !Ref MacAlbTg
           Type: forward
       LoadBalancerArn: !Ref MacAlb
-      Port: 80
+      Port: !Ref HostPort
       Protocol: HTTP
 
   MacAlb:

@@ -10,8 +10,7 @@ aws cloudformation create-stack --stack-name mac-sample-ec2 --template-body file
 
 aws cloudformation create-stack --stack-name mac-sample-ecs-fargate --template-body file://sample-ecs-fargate.yml --capabilities CAPABILITY_NAMED_IAM
 
-aws cloudformation create-stack --stack-name sample-ecs-fargate-private-nlb --template-body file://sample-ecs-fargate-private-nlb.yml --capabilities CAPABILITY_NAMED_IAM
-aws cloudformation create-stack --stack-name mac-http-apigateway --template-body file://sample-http-apigateway.yml
+
 
 // API Gateway
 aws cloudformation create-stack --stack-name sample-public-rest-api-lambda --template-body file://sample-public-rest-api-lambda.yml
@@ -20,6 +19,9 @@ aws cloudformation create-stack --stack-name sample-public-http-api-lambda --tem
 
 aws cloudformation create-stack --stack-name sample-ecs-fargate-private-alb --template-body file://sample-ecs-fargate-private-alb.yml --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation create-stack --stack-name sample-public-http-api-private-service --template-body file://sample-public-http-api-private-service.yml
+
+aws cloudformation create-stack --stack-name sample-ecs-fargate-private-nlb --template-body file://sample-ecs-fargate-private-nlb.yml --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation create-stack --stack-name sample-public-http-api-cognito --template-body file://sample-public-http-api-cognito.yml
 
 // Setup other resources
 aws cloudformation create-stack --stack-name mac-s3 --template-body file://sample-s3.yml

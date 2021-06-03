@@ -2,8 +2,11 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
   AppPort:
-    Type: String
-    Default: '80'
+    Type: Number
+    Default: 8080
+  HostPort:
+    Type: Number
+    Default: 80
 
 Resources:
 
@@ -69,8 +72,8 @@ Resources:
           ToPort: 443
           CidrIp: 10.0.0.0/16
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+          FromPort: !Ref AppPort
+          ToPort: !Ref AppPort
           CidrIp: 10.0.0.0/16
 
   # ECS Fargate
@@ -151,7 +154,7 @@ Resources:
         - TargetGroupArn: !Ref MacPrivateNlbTg
           Type: forward
       LoadBalancerArn: !Ref MacPrivateNlb
-      Port: 80
+      Port: !Ref HostPort
       Protocol: TCP
 
   MacPrivateNlb:
