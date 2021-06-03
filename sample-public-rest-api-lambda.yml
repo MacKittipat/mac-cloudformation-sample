@@ -31,7 +31,7 @@ Resources:
       RestApiId: !Ref MacApiRestApi
       ApiKeyRequired: false
       AuthorizationType: NONE
-      Integration:
+      Integration: # https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/#type
         ConnectionType: INTERNET
         Type: AWS_PROXY
         IntegrationHttpMethod: POST # Always POST for AWS_PROXY

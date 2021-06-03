@@ -33,6 +33,7 @@ Resources:
     Properties:
       ApiId: !Ref MacApiHttpApi
       Description: HTTP Proxy Integration
+      # https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/#type
       IntegrationType: AWS_PROXY
       IntegrationMethod: POST
       IntegrationUri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MacLambdaFunction.Arn}/invocations'
