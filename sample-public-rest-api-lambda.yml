@@ -3,14 +3,14 @@ AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
   LambdaFunctionName:
     Type: String
-    Default: HelloWorld
+    Default: RestHelloWorld
   ApiStagenName:
     Type: String
     Default: prod
 
 Resources:
 
-  # API Gateway
+  # REST API Gateway
   MacApiRestApi:
     Type: 'AWS::ApiGateway::RestApi'
     Properties:
@@ -54,7 +54,7 @@ Resources:
           exports.handler = async function(event) {
             const response = {
               statusCode: 200,
-              body: "Hello World. Build with CloudFormation",
+              body: "Hello World. This is public REST API",
             };
             return response;
           }

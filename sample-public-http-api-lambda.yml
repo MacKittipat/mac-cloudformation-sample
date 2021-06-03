@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Default: HttpHelloWorld
+
+Resources:
+
+  # HTTP API Gateway
+  MacApiHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: MacApiHttpApi
+      ProtocolType: HTTP
+
+  MacApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MacApiHttpApi
+      RouteKey: !Sub 'GET /${LambdaFunctionName}'
+      Target: !Sub 'integrations/${MacApiIntegration}'
+
+  MacApiCustomRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MacApiHttpApi
+      RouteKey: !Sub 'GET /mac/${LambdaFunctionName}'
+      Target: !Sub 'integrations/${MacApiIntegration}'
+
+  MacApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MacApiHttpApi
+      Description: HTTP Proxy Integration
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      IntegrationUri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MacLambdaFunction.Arn}/invocations'
+      ConnectionType: INTERNET
+      PayloadFormatVersion: '1.0'
+
+  MacApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: $default
+      AutoDeploy: true
+      ApiId: !Ref MacApiHttpApi
+
+  # Lambda Function
+  MacLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Code:
+        ZipFile: |
+          exports.handler = async function(event) {
+            const response = {
+              statusCode: 200,
+              body: "Hello World. This is public HTTP API",
+            };
+            return response;
+          }
+      Handler: index.handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/LambdaAdmin'
+      Runtime: nodejs12.x
+
+  MacLambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt MacLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MacApiHttpApi}/*/*/${LambdaFunctionName}'
+
+Outputs:
+  MacApiUrl:
+    Description: Api Gateway URL
+    Value: !Sub https://${MacApiHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${LambdaFunctionName}
+  MacApiCustomUrl:
+    Description: Api Gateway URL
+    Value: !Sub https://${MacApiHttpApi}.execute-api.${AWS::Region}.amazonaws.com/mac/${LambdaFunctionName}
