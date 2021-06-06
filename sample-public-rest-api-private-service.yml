@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  ApiStageName:
+    Type: String
+    Default: prod
+
+Resources:
+
+  # REST API Gateway
+  MacApiRestApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: MacApiRestApi
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  MacApiResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref MacApiRestApi
+      ParentId: !GetAtt MacApiRestApi.RootResourceId
+      PathPart: '{proxy+}'
+
+  MacApiMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      HttpMethod: ANY
+      ResourceId: !Ref MacApiResource
+      RestApiId: !Ref MacApiRestApi
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.proxy: true
+      Integration: # https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/#type
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref MacApiVpcLink
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: ANY
+        Uri: !Sub
+          - 'http://${Domain}/{proxy}'
+          - { Domain: !ImportValue MacPrivateNlbDomain }
+        CacheKeyParameters:
+          - 'method.request.path.proxy'
+        RequestParameters:
+          integration.request.path.proxy: 'method.request.path.proxy'
+
+  MacApiDeployment:
+    DependsOn: MacApiMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref MacApiRestApi
+
+  MacApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: !Ref ApiStageName
+      Description: 'Prod Stage'
+      RestApiId: !Ref MacApiRestApi
+      DeploymentId: !Ref MacApiDeployment
+
+  # VPC Link
+  MacApiVpcLink:
+    Type: AWS::ApiGateway::VpcLink
+    Properties:
+      Description: 'VPC Link for private load balancer'
+      Name: MacApiVpcLink
+      TargetArns:
+        - !ImportValue MacPrivateNlbArn
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Prod stage endpoint"
+    Value: !Sub "https://${MacApiRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiStageName}/"

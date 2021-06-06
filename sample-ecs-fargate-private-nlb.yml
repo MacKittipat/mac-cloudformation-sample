@@ -172,6 +172,8 @@ Outputs:
   MacPrivateNlbDomain:
     Description: NLB Domain
     Value: !GetAtt MacPrivateNlb.DNSName
+    Export:
+      Name: 'MacPrivateNlbDomain'
   MacEcsTaskRoleArn:
     Description: ECS Task Role ARN
     Value: !GetAtt MacEcsTaskRole.Arn
@@ -182,3 +184,8 @@ Outputs:
     Value: !Ref MacPrivateNlbListener
     Export:
       Name: 'MacPrivateNlbListener'
+  MacPrivateNlbArn:
+    Description: NLB ARN
+    Value: !Ref MacPrivateNlb
+    Export:
+      Name: 'MacPrivateNlbArn'

@@ -50,6 +50,7 @@ Resources:
       AutoDeploy: true
       ApiId: !Ref MacApi
 
+  # VPC Link
   MacApiVpcLink:
     Type: AWS::ApiGatewayV2::VpcLink
     Properties:
